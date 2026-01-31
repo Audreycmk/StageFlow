@@ -1,0 +1,2 @@
+# StageFlow
+聲序 StageFlow — 你的智能表演預約夥伴  隨時探索你身邊的可預約表演場地與開放時段，自由選擇想演唱的歌曲數量，一鍵預約專屬表演時段。系統將自動為所有表演者智能安排出場次序，讓你輕鬆登台，專注展現舞台魅力。✅ 場地探索 – 即時查詢附近可預約的表演場地與日期 ✅ 自訂演出 – 自由選擇演唱曲目數量，靈活規劃表演內容 ✅ 智能排序 – 系統自動公平安排出場次序，流程順暢不操心 ✅ 快速預約 – 簡單幾步完成預約，即時確認表演時段  |  Find stages. Pick songs. Get booked.  |  Your all-in-one platform to book and manage live singing performances.
