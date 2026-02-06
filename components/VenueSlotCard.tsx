@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn, formatTimeRange, formatZhDate } from "@/lib/utils";
 
 interface VenueSlotCardProps {
   name: string;
@@ -44,8 +44,12 @@ export default function VenueSlotCard({
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-        <span className="rounded-full bg-slate-100 px-3 py-1">{date}</span>
-        <span className="rounded-full bg-slate-100 px-3 py-1">{timeRange}</span>
+        <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-900">
+          {formatZhDate(date)}
+        </span>
+        <span className="rounded-full bg-slate-100 px-3 py-1">
+          {formatTimeRange(timeRange)}
+        </span>
       </div>
     </>
   );

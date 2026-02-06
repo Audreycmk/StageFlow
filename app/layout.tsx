@@ -12,6 +12,9 @@ const noto = Noto_Sans_TC({
 export const metadata: Metadata = {
   title: "StageFlow | Live Singing Booking",
   description: "Book 4-minute live singing slots with an elegant, minimal experience.",
+  icons: {
+    icon: "/stageflow.png",
+  },
 };
 
 export default function RootLayout({
