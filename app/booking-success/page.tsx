@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import React from 'react';
 
 function BookingSuccessContent() {
   const searchParams = useSearchParams();

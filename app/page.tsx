@@ -1,146 +1,273 @@
-'use client';
+"use client";
 
-import { venues } from '@/lib/data';
-import VenueCard from '@/components/VenueCard';
-import { motion } from 'framer-motion';
+import { useMemo, useState } from "react";
+import BookingModal from "../components/BookingModal";
+import SearchFilter from "../components/SearchFilter";
+import TimeSlotList, { SlotItem } from "../components/TimeSlotList";
+import VenueSlotCard from "../components/VenueSlotCard";
+import { cn } from "../lib/utils";
 
-export default function Home() {
+interface VenueSession {
+  id: string;
+  name: string;
+  region: string;
+  date: string;
+  timeRange: string;
+  slots: SlotItem[];
+}
+
+const pricePerSlot = 120;
+
+const venues: VenueSession[] = [
+  {
+    id: "v1",
+    name: "光影劇場 Live Hall",
+    region: "台北｜信義",
+    date: "2026-02-18",
+    timeRange: "19:00 - 20:00",
+    slots: [
+      { id: "v1-19:00", time: "19:00" },
+      { id: "v1-19:04", time: "19:04", performer: "沐晨" },
+      { id: "v1-19:08", time: "19:08" },
+      { id: "v1-19:12", time: "19:12", performer: "允希" },
+      { id: "v1-19:16", time: "19:16" },
+      { id: "v1-19:20", time: "19:20" },
+      { id: "v1-19:24", time: "19:24", performer: "CJ" },
+      { id: "v1-19:28", time: "19:28" },
+      { id: "v1-19:32", time: "19:32" },
+      { id: "v1-19:36", time: "19:36", performer: "小魚" },
+      { id: "v1-19:40", time: "19:40" },
+      { id: "v1-19:44", time: "19:44" },
+      { id: "v1-19:48", time: "19:48", performer: "Tina" },
+      { id: "v1-19:52", time: "19:52" },
+      { id: "v1-19:56", time: "19:56" },
+    ],
+  },
+  {
+    id: "v2",
+    name: "海潮音樂吧",
+    region: "台中｜西區",
+    date: "2026-02-18",
+    timeRange: "20:00 - 21:00",
+    slots: [
+      { id: "v2-20:00", time: "20:00", performer: "阿啟" },
+      { id: "v2-20:04", time: "20:04" },
+      { id: "v2-20:08", time: "20:08" },
+      { id: "v2-20:12", time: "20:12" },
+      { id: "v2-20:16", time: "20:16", performer: "Jade" },
+      { id: "v2-20:20", time: "20:20" },
+      { id: "v2-20:24", time: "20:24" },
+      { id: "v2-20:28", time: "20:28", performer: "Ian" },
+      { id: "v2-20:32", time: "20:32" },
+      { id: "v2-20:36", time: "20:36" },
+      { id: "v2-20:40", time: "20:40", performer: "舒涵" },
+      { id: "v2-20:44", time: "20:44" },
+      { id: "v2-20:48", time: "20:48" },
+      { id: "v2-20:52", time: "20:52", performer: "麻糬" },
+      { id: "v2-20:56", time: "20:56" },
+    ],
+  },
+  {
+    id: "v3",
+    name: "星河舞台",
+    region: "高雄｜苓雅",
+    date: "2026-02-20",
+    timeRange: "18:30 - 19:30",
+    slots: [
+      { id: "v3-18:30", time: "18:30" },
+      { id: "v3-18:34", time: "18:34", performer: "Mu" },
+      { id: "v3-18:38", time: "18:38" },
+      { id: "v3-18:42", time: "18:42" },
+      { id: "v3-18:46", time: "18:46" },
+      { id: "v3-18:50", time: "18:50", performer: "方糖" },
+      { id: "v3-18:54", time: "18:54" },
+      { id: "v3-18:58", time: "18:58" },
+      { id: "v3-19:02", time: "19:02" },
+      { id: "v3-19:06", time: "19:06", performer: "Riley" },
+      { id: "v3-19:10", time: "19:10" },
+      { id: "v3-19:14", time: "19:14" },
+      { id: "v3-19:18", time: "19:18" },
+      { id: "v3-19:22", time: "19:22", performer: "安安" },
+      { id: "v3-19:26", time: "19:26" },
+    ],
+  },
+];
+
+export default function HomePage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedVenueId, setSelectedVenueId] = useState(venues[0]?.id ?? "");
+  const [selectedSlotIds, setSelectedSlotIds] = useState<string[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const filteredVenues = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return venues.filter((venue) => {
+      const matchesQuery =
+        query.length === 0 ||
+        venue.name.toLowerCase().includes(query) ||
+        venue.region.toLowerCase().includes(query);
+      const matchesDate = selectedDate.length === 0 || venue.date === selectedDate;
+      return matchesQuery && matchesDate;
+    });
+  }, [searchQuery, selectedDate]);
+
+  const selectedVenue = filteredVenues.find((venue) => venue.id === selectedVenueId) ??
+    filteredVenues[0];
+
+  const selectedSlots = selectedVenue
+    ? selectedVenue.slots.filter((slot) => selectedSlotIds.includes(slot.id))
+    : [];
+
+  const totalAmount = selectedSlots.length * pricePerSlot;
+
+  const handleVenueClick = (venueId: string) => {
+    setSelectedVenueId(venueId);
+    setSelectedSlotIds([]);
+  };
+
+  const handleToggleSlot = (slot: SlotItem) => {
+    setSelectedSlotIds((prev) =>
+      prev.includes(slot.id) ? prev.filter((id) => id !== slot.id) : [...prev, slot.id]
+    );
+  };
+
+  const handleConfirmBooking = () => {
+    setIsModalOpen(false);
+    setSelectedSlotIds([]);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black to-gray-900">
-      {/* Hero Section */}
-      <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        className="relative overflow-hidden"
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-purple-600/20 to-pink-600/20" />
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%239C92AC" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-        }} />
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-32">
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-center"
-          >
-            <h1 className="text-5xl sm:text-7xl font-bold text-white mb-6">
-              聲序 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">StageFlow</span>
-            </h1>
-            <p className="text-xl sm:text-2xl text-gray-300 mb-4">
-              你的智能表演預約夥伴
-            </p>
-            <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8">
-              探索身邊的表演場地，自由選擇演唱曲目，系統智能排序，讓你輕鬆登台展現魅力
-            </p>
-            
-            <div className="flex flex-wrap justify-center gap-4 text-sm sm:text-base">
-              <div className="glass-effect px-6 py-3 rounded-full">
-                <span className="text-blue-400 font-semibold">✅</span> 即時場地探索
+    <div className="min-h-screen">
+      <header className="mx-auto max-w-6xl px-6 pb-8 pt-12">
+        <div className="flex flex-col gap-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-indigo-500">
+            StageFlow Booking
+          </p>
+          <h1 className="text-3xl font-semibold text-slate-900 md:text-4xl">
+            乾淨、優雅的現場演唱預約體驗
+          </h1>
+          <p className="max-w-2xl text-sm leading-7 text-slate-600">
+            主頁顯示場次列表，可搜尋場地與地區並按日期篩選。點擊場次後查看 4
+            分鐘一段的時間表，空缺時段可多選後付款預約。
+          </p>
+        </div>
+      </header>
+
+      <main className="mx-auto grid max-w-6xl gap-8 px-6 pb-20 lg:grid-cols-[1.05fr_1.2fr]">
+        <section className="flex flex-col gap-6">
+          <SearchFilter
+            searchQuery={searchQuery}
+            selectedDate={selectedDate}
+            onSearchChange={setSearchQuery}
+            onDateChange={setSelectedDate}
+          />
+
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900">場次列表</h2>
+            <span className="text-xs text-slate-500">
+              共 {filteredVenues.length} 場
+            </span>
+          </div>
+
+          <div className="grid gap-4">
+            {filteredVenues.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-6 text-sm text-slate-500">
+                找不到符合條件的場次。
               </div>
-              <div className="glass-effect px-6 py-3 rounded-full">
-                <span className="text-green-400 font-semibold">✅</span> 自訂演出曲目
+            ) : (
+              filteredVenues.map((venue) => (
+                <VenueSlotCard
+                  key={venue.id}
+                  name={venue.name}
+                  region={venue.region}
+                  date={venue.date}
+                  timeRange={venue.timeRange}
+                  availableSlots={venue.slots.filter((slot) => !slot.performer).length}
+                  isSelected={venue.id === selectedVenue?.id}
+                  onClick={() => handleVenueClick(venue.id)}
+                />
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-6">
+          <div className="rounded-3xl border border-white/80 bg-white/85 p-6 shadow-[0_28px_70px_-45px_rgba(15,23,42,0.45)]">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-indigo-500">
+                  Time Table
+                </p>
+                <h2 className="mt-2 text-xl font-semibold text-slate-900">
+                  {selectedVenue ? selectedVenue.name : "請選擇場次"}
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {selectedVenue
+                    ? `${selectedVenue.region} · ${selectedVenue.date} · ${selectedVenue.timeRange}`
+                    : ""}
+                </p>
               </div>
-              <div className="glass-effect px-6 py-3 rounded-full">
-                <span className="text-purple-400 font-semibold">✅</span> 智能排序系統
-              </div>
-              <div className="glass-effect px-6 py-3 rounded-full">
-                <span className="text-pink-400 font-semibold">✅</span> 快速確認預約
+              <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                已選 <span className="font-semibold">{selectedSlots.length}</span> 段
               </div>
             </div>
-          </motion.div>
-        </div>
-      </motion.section>
 
-      {/* Venues Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="mb-12"
-        >
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">探索表演場地</h2>
-          <p className="text-gray-400 text-lg">
-            瀏覽你附近的可預約表演場地，選擇最適合你的舞台
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {venues.map((venue, index) => (
-            <VenueCard key={venue.id} venue={venue} index={index} />
-          ))}
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-12 text-center">為什麼選擇 StageFlow？</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              viewport={{ once: true }}
-              className="glass-effect p-8 rounded-xl"
-            >
-              <div className="text-5xl mb-4">🎤</div>
-              <h3 className="text-xl font-bold text-white mb-3">靈活選擇</h3>
-              <p className="text-gray-400">
-                自由選擇演唱曲目數量，每首歌4分鐘，每首$200，讓你完全掌控表演時長和預算。
-              </p>
-            </motion.div>
-
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-              className="glass-effect p-8 rounded-xl"
-            >
-              <div className="text-5xl mb-4">🤖</div>
-              <h3 className="text-xl font-bold text-white mb-3">智能排序</h3>
-              <p className="text-gray-400">
-                系統自動公平安排所有表演者的出場次序，確保每個人都有展現的機會。
-              </p>
-            </motion.div>
-
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              viewport={{ once: true }}
-              className="glass-effect p-8 rounded-xl"
-            >
-              <div className="text-5xl mb-4">💳</div>
-              <h3 className="text-xl font-bold text-white mb-3">多元付款</h3>
-              <p className="text-gray-400">
-                支援 PayMe、FPS 轉數快和銀行轉帳，讓你用最方便的方式完成付款。
-              </p>
-            </motion.div>
+            <div className="mt-6">
+              {selectedVenue ? (
+                <TimeSlotList
+                  slots={selectedVenue.slots}
+                  selectedSlotIds={selectedSlotIds}
+                  onToggle={handleToggleSlot}
+                />
+              ) : (
+                <p className="text-sm text-slate-500">請先從左側選擇場次。</p>
+              )}
+            </div>
           </div>
-        </motion.div>
-      </section>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-800 mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center text-gray-400">
-            <p className="text-2xl font-bold text-white mb-2">StageFlow 聲序</p>
-            <p>© 2026 StageFlow. All rights reserved.</p>
-            <p className="mt-2">讓每個人都能輕鬆登台，展現自我</p>
+          <div
+            className={cn(
+              "flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/80 bg-white/85 p-6",
+              "shadow-[0_28px_70px_-45px_rgba(15,23,42,0.4)]"
+            )}
+          >
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                Booking Summary
+              </p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">
+                NT$ {totalAmount}
+              </p>
+              <p className="text-xs text-slate-500">每段 {pricePerSlot} 元</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              disabled={selectedSlots.length === 0}
+              className={cn(
+                "rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition",
+                selectedSlots.length === 0
+                  ? "cursor-not-allowed bg-slate-300"
+                  : "bg-indigo-600 hover:bg-indigo-500"
+              )}
+            >
+              付款預約
+            </button>
           </div>
-        </div>
-      </footer>
+        </section>
+      </main>
+
+      <BookingModal
+        open={isModalOpen}
+        slots={selectedSlots.map((slot) => ({
+          time: slot.time,
+          label: `${selectedVenue?.name ?? ""} · ${selectedVenue?.date ?? ""}`,
+        }))}
+        totalAmount={totalAmount}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleConfirmBooking}
+      />
     </div>
   );
 }
