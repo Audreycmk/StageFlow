@@ -26,6 +26,7 @@ export default function TimetablePage() {
   const [singerName, setSingerName] = useState("");
   const [songCount, setSongCount] = useState(1);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
   const unitPrice = venue?.pricePerSong ?? 150;
   const totalSongs = venue ? getTotalSongsFromRange(venue.timeRange) : 0;
@@ -141,6 +142,7 @@ export default function TimetablePage() {
     setSingerName("");
     setSongCount(1);
     setErrorMessage("");
+    setIsPaymentOpen(false);
   };
 
   const handleCancelSlot = (singer?: string) => {
@@ -321,7 +323,7 @@ export default function TimetablePage() {
               )}
               <button
                 type="button"
-                onClick={handlePurchase}
+                onClick={() => setIsPaymentOpen(true)}
                 disabled={!venue || remainingSongs === 0}
                 className={cn(
                   "rounded-2xl px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition",
@@ -336,6 +338,81 @@ export default function TimetablePage() {
           </div>
         </aside>
       </main>
+
+      {isPaymentOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 px-4 py-8 backdrop-blur-sm">
+          <div className="w-full max-w-[80vw] max-h-[80vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.55)] sm:max-w-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500">
+                  💰 付款資料
+                </p>
+                <h3 className="mt-2 text-xl font-semibold text-slate-900">付款方式</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPaymentOpen(false)}
+                className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-500 transition hover:border-indigo-200 hover:text-indigo-600"
+              >
+                關閉
+              </button>
+            </div>
+
+            <div className="mt-6 grid gap-4 text-sm text-slate-700">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="font-semibold text-slate-900">✅ 轉數快 (FPS) / PayMe</p>
+                <div className="mt-3 grid gap-2">
+                  <div className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700">
+                    電話：9000 9999
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700">
+                    戶口名稱：Tom Chan
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="font-semibold text-slate-900">✅ 銀行轉賬</p>
+                <div className="mt-3 grid gap-2">
+                  <div className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700">
+                    銀行：恒生銀行
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700">
+                    戶口：298-123456-001
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700">
+                    持有人：陳浩霖 / Tom Chan
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+                <p className="text-sm font-semibold">⚠️ 溫馨提示：</p>
+                <p className="mt-2 text-xs leading-6">
+                  入數後請影相/截圖發回，並註明訂單編號，方便對數。謝謝！
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => setIsPaymentOpen(false)}
+                className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={handlePurchase}
+                className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-500"
+              >
+                已付款，確認預約
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

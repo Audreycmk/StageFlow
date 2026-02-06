@@ -42,9 +42,9 @@ export default function HomePage() {
             </Link>
           </div>
       
-          <h2 className="text-lg font-medium text-slate-700 md:text-xl">
+          {/* <h2 className="text-lg font-medium text-slate-700 md:text-xl">
             智能演唱預約體驗
-          </h2>
+          </h2> */}
           <p className="max-w-2xl text-sm leading-7 text-slate-600">
             探索可預約表演場地與時段，自由選擇想演唱的歌曲數量，一鍵預約專屬表演時段。
           </p>
