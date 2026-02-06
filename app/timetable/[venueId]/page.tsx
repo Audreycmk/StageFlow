@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import BookingModal from "@/components/BookingModal";
 import TimeSlotList from "@/components/TimeSlotList";
-import { cn } from "@/lib/utils";
+import { cn, formatTimeRange, formatZhDate } from "@/lib/utils";
 import { useVenueStore } from "@/lib/useVenueStore";
 
 export default function TimetablePage() {
@@ -68,7 +68,11 @@ export default function TimetablePage() {
                 {venue ? venue.name : "找不到場次"}
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                {venue ? `${venue.region} · ${venue.date} · ${venue.timeRange}` : ""}
+                {venue
+                  ? `${venue.region} · ${formatZhDate(venue.date)} · ${formatTimeRange(
+                      venue.timeRange
+                    )}`
+                  : ""}
               </p>
             </div>
             <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
