@@ -22,7 +22,7 @@ export default function SearchFilter({
         <input
           value={searchQuery}
           onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="搜尋場地或地區"
+          placeholder="搜尋場地或地區（香港）"
           className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
         />
       </div>

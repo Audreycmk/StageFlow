@@ -6,6 +6,7 @@ interface BookingModalProps {
   open: boolean;
   slots: { time: string; label: string }[];
   totalAmount: number;
+  currencyLabel?: string;
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -14,6 +15,7 @@ export default function BookingModal({
   open,
   slots,
   totalAmount,
+  currencyLabel = "HK$",
   onClose,
   onConfirm,
 }: BookingModalProps) {
@@ -51,7 +53,9 @@ export default function BookingModal({
 
         <div className="mt-6 flex items-center justify-between text-sm">
           <span className="text-slate-500">總金額</span>
-          <span className="text-lg font-semibold text-slate-900">NT$ {totalAmount}</span>
+          <span className="text-lg font-semibold text-slate-900">
+            {currencyLabel} {totalAmount}
+          </span>
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">

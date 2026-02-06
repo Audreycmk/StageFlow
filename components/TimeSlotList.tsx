@@ -1,12 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import type { SlotItem } from "@/lib/venues";
 
-export interface SlotItem {
-  id: string;
-  time: string;
-  performer?: string;
-}
+export type { SlotItem };
 
 interface TimeSlotListProps {
   slots: SlotItem[];

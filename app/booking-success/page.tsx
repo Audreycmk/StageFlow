@@ -70,7 +70,7 @@ function BookingSuccessContent() {
               <div className="h-px bg-gray-700" />
               <div className="flex justify-between items-center text-lg">
                 <span className="text-gray-300">總費用</span>
-                <span className="text-green-400 font-bold text-2xl">${cost || 0}</span>
+                <span className="text-green-400 font-bold text-2xl">HK$ {cost || 0}</span>
               </div>
             </div>
           </motion.div>
