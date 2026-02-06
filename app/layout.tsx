@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
+import { Inter, Noto_Sans_TC } from "next/font/google";
 import "./globals.css";
 
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const noto = Noto_Sans_TC({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-noto",
+});
+
 export const metadata: Metadata = {
-  title: "StageFlow 聲序 - 智能表演預約平台",
-  description: "探索、預約和管理現場演唱表演的一站式平台",
+  title: "StageFlow | Live Singing Booking",
+  description: "Book 4-minute live singing slots with an elegant, minimal experience.",
 };
 
 export default function RootLayout({
@@ -12,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-HK" className="dark">
-      <body className="antialiased">
+    <html lang="zh-Hant" className={`${inter.variable} ${noto.variable}`}>
+      <body className="font-[var(--font-noto)] antialiased">
         {children}
       </body>
     </html>
