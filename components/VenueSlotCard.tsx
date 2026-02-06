@@ -47,7 +47,7 @@ export default function VenueSlotCard({
         <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-900">
           {formatZhDate(date)}
         </span>
-        <span className="rounded-full bg-slate-100 px-3 py-1">
+        <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-semibold text-amber-700">
           {formatTimeRange(timeRange)}
         </span>
       </div>

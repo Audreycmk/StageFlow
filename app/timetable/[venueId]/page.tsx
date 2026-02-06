@@ -143,6 +143,25 @@ export default function TimetablePage() {
     setErrorMessage("");
   };
 
+  const handleCancelSlot = (singer?: string) => {
+    if (!venue || !singer) return;
+    const confirmed = window.confirm("要取消這個時段嗎？");
+    if (!confirmed) return;
+
+    const nextVenues = venues.map((item) => {
+      if (item.id !== venue.id) return item;
+      const nextBookings = item.bookings
+        .map((booking) =>
+          booking.singer === singer
+            ? { ...booking, songs: Math.max(booking.songs - 1, 0) }
+            : booking
+        )
+        .filter((booking) => booking.songs > 0);
+      return { ...item, bookings: nextBookings };
+    });
+    updateVenues(nextVenues);
+  };
+
   return (
     <div className="min-h-screen">
       <header className="mx-auto max-w-6xl px-6 pb-6 pt-10">
@@ -193,12 +212,17 @@ export default function TimetablePage() {
             {!isReady ? (
               <p className="text-sm text-slate-500">載入中...</p>
             ) : venue ? (
-              <div className="grid gap-3">
+              <div className="grid max-h-[26rem] gap-3 overflow-y-auto pr-1">
                 {timetable.map((slot, index) => (
-                  <div
+                  <button
+                    type="button"
                     key={`${slot.time}-${index}`}
+                    onClick={() => slot.booked && handleCancelSlot(slot.singer)}
                     className={cn(
-                      "flex items-center justify-between rounded-xl border px-4 py-3 text-sm",
+                      "flex items-center justify-between rounded-xl border px-4 py-3 text-sm text-left",
+                      slot.booked
+                        ? "cursor-pointer transition hover:opacity-90"
+                        : "cursor-default",
                       slot.booked
                         ? getSingerClass(slot.singer)
                         : "border-dashed border-slate-200 bg-white text-slate-400"
@@ -217,7 +241,7 @@ export default function TimetablePage() {
                     ) : (
                       <span>可預約</span>
                     )}
-                  </div>
+                  </button>
                 ))}
               </div>
             ) : (
