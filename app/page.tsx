@@ -6,6 +6,7 @@ import Link from "next/link";
 import SearchFilter from "../components/SearchFilter";
 import VenueSlotCard from "../components/VenueSlotCard";
 import { useVenueStore } from "@/lib/useVenueStore";
+import { getTotalSongsFromRange } from "@/lib/utils";
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -76,17 +77,26 @@ export default function HomePage() {
                 找不到符合條件的場次。
               </div>
             ) : (
-              filteredVenues.map((venue) => (
-                <VenueSlotCard
-                  key={venue.id}
-                  name={venue.name}
-                  region={venue.region}
-                  date={venue.date}
-                  timeRange={venue.timeRange}
-                  availableSlots={venue.slots.filter((slot) => !slot.performer).length}
-                  href={`/timetable/${venue.id}`}
-                />
-              ))
+              filteredVenues.map((venue) => {
+                const totalSongs = getTotalSongsFromRange(venue.timeRange);
+                const bookedSongs = venue.bookings.reduce(
+                  (sum, booking) => sum + booking.songs,
+                  0
+                );
+                const availableSlots = Math.max(0, totalSongs - bookedSongs);
+
+                return (
+                  <VenueSlotCard
+                    key={venue.id}
+                    name={venue.name}
+                    region={venue.region}
+                    date={venue.date}
+                    timeRange={venue.timeRange}
+                    availableSlots={availableSlots}
+                    href={`/timetable/${venue.id}`}
+                  />
+                );
+              })
             )}
           </div>
         </section>

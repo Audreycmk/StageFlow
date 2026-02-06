@@ -9,7 +9,12 @@ export function loadVenues(): VenueSession[] {
   if (!raw) return defaultVenues;
   try {
     const parsed = JSON.parse(raw) as VenueSession[];
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : defaultVenues;
+    if (!Array.isArray(parsed) || parsed.length === 0) return defaultVenues;
+    return parsed.map((venue) => ({
+      ...venue,
+      pricePerSong: venue.pricePerSong ?? 150,
+      bookings: venue.bookings ?? [],
+    }));
   } catch {
     return defaultVenues;
   }

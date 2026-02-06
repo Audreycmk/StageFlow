@@ -27,3 +27,33 @@ export function formatTimeRange(timeRange: string) {
   if (!start || !end) return timeRange;
   return `${to12Hour(start)} - ${to12Hour(end)}`;
 }
+
+export function parseTimeToMinutes(time: string) {
+  const [hourStr, minuteStr] = time.split(":");
+  const hour = Number(hourStr);
+  const minute = Number(minuteStr);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+  return hour * 60 + minute;
+}
+
+export function getTotalSongsFromRange(timeRange: string) {
+  const [start, end] = timeRange.split(" - ");
+  if (!start || !end) return 0;
+  const startMin = parseTimeToMinutes(start);
+  const endMin = parseTimeToMinutes(end);
+  if (startMin === null || endMin === null) return 0;
+  return Math.max(0, Math.floor((endMin - startMin) / 4));
+}
+
+export function formatSlotRange(startMinutes: number) {
+  const endMinutes = startMinutes + 4;
+  const startHour = Math.floor(startMinutes / 60)
+    .toString()
+    .padStart(2, "0");
+  const startMinute = (startMinutes % 60).toString().padStart(2, "0");
+  const endHour = Math.floor(endMinutes / 60)
+    .toString()
+    .padStart(2, "0");
+  const endMinute = (endMinutes % 60).toString().padStart(2, "0");
+  return `${to12Hour(`${startHour}:${startMinute}`)} - ${to12Hour(`${endHour}:${endMinute}`)}`;
+}

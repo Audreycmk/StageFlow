@@ -41,7 +41,7 @@ export default function VenueCrudPage() {
           </Link>
         </div>
         <p className="mt-2 text-sm text-slate-600">
-          檢視、編輯與刪除場地。時間表會依照場次時間自動生成 15 分鐘區間。
+          檢視、編輯與刪除場地。時間表會依照場次時間自動生成 4 分鐘區間。
         </p>
       </header>
 

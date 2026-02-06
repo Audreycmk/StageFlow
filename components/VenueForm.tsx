@@ -79,7 +79,7 @@ function buildSlots(venueId: string, startTime: string, endTime: string) {
   const start = toMinutes(startTime);
   const end = toMinutes(endTime);
   const slots: VenueSession["slots"] = [];
-  for (let t = start; t < end; t += 15) {
+  for (let t = start; t < end; t += 4) {
     const time = toTime(t);
     slots.push({ id: `${venueId}-${time}`, time });
   }
@@ -142,6 +142,7 @@ export default function VenueForm({ initialVenue, submitLabel, onSubmit }: Venue
       pricePerSong: Number(form.pricePerSong),
       timeRange,
       slots,
+      bookings: initialVenue?.bookings ?? [],
     });
   };
 

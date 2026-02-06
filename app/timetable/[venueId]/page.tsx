@@ -3,41 +3,144 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import BookingModal from "@/components/BookingModal";
-import TimeSlotList from "@/components/TimeSlotList";
-import { cn, formatTimeRange, formatZhDate } from "@/lib/utils";
+import {
+  cn,
+  formatTimeRange,
+  formatZhDate,
+  getTotalSongsFromRange,
+  parseTimeToMinutes,
+} from "@/lib/utils";
 import { useVenueStore } from "@/lib/useVenueStore";
 
 export default function TimetablePage() {
   const params = useParams();
   const venueId = typeof params.venueId === "string" ? params.venueId : "";
 
-  const { venues } = useVenueStore();
+  const { venues, updateVenues, isReady } = useVenueStore();
 
   const venue = useMemo(
     () => venues.find((item) => item.id === venueId),
     [venueId, venues]
   );
 
-  const [selectedSlotIds, setSelectedSlotIds] = useState<string[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const selectedSlots = venue
-    ? venue.slots.filter((slot) => selectedSlotIds.includes(slot.id))
-    : [];
+  const [singerName, setSingerName] = useState("");
+  const [songCount, setSongCount] = useState(1);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const unitPrice = venue?.pricePerSong ?? 150;
-  const totalAmount = selectedSlots.length * unitPrice;
+  const totalSongs = venue ? getTotalSongsFromRange(venue.timeRange) : 0;
+  const bookedSongs = venue
+    ? venue.bookings.reduce((sum, booking) => sum + booking.songs, 0)
+    : 0;
+  const remainingSongs = Math.max(0, totalSongs - bookedSongs);
+  const totalSingers = venue ? venue.bookings.length : 0;
 
-  const handleToggleSlot = (slot: { id: string }) => {
-    setSelectedSlotIds((prev) =>
-      prev.includes(slot.id) ? prev.filter((id) => id !== slot.id) : [...prev, slot.id]
+  const scheduleEntries = useMemo(() => {
+    if (!venue) return [] as Array<{ singer: string; songNumber: number }>;
+    const maxSongs = venue.bookings.reduce(
+      (max, booking) => Math.max(max, booking.songs),
+      0
     );
+    const entries: Array<{ singer: string; songNumber: number }> = [];
+    for (let songNumber = 1; songNumber <= maxSongs; songNumber += 1) {
+      venue.bookings.forEach((booking) => {
+        if (booking.songs >= songNumber) {
+          entries.push({ singer: booking.singer, songNumber });
+        }
+      });
+    }
+    return entries;
+  }, [venue]);
+
+  const timetable = useMemo(() => {
+    if (!venue)
+      return [] as Array<{
+        time: string;
+        booked: boolean;
+        singer?: string;
+        songNumber?: number;
+      }>;
+    const [startTime] = venue.timeRange.split(" - ");
+    const startMinutes = parseTimeToMinutes(startTime ?? "");
+    if (startMinutes === null) return [];
+    return Array.from({ length: totalSongs }).map((_, index) => {
+      const slotStart = startMinutes + index * 4;
+      const slotEnd = slotStart + 4;
+      const formatMinutes = (value: number) => {
+        const hour24 = Math.floor(value / 60);
+        const minute = value % 60;
+        const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+        return `${hour12}:${minute.toString().padStart(2, "0")}`;
+      };
+      const timeLabel = `${formatMinutes(slotStart)}-${formatMinutes(slotEnd)}`;
+      const entry = scheduleEntries[index];
+      if (!entry) {
+        return { time: timeLabel, booked: false };
+      }
+      return {
+        time: timeLabel,
+        booked: true,
+        singer: entry.singer,
+        songNumber: entry.songNumber,
+      };
+    });
+  }, [venue, totalSongs, scheduleEntries]);
+
+  const colorClasses = [
+    "border-violet-200 bg-violet-50/80 text-violet-700",
+    "border-emerald-200 bg-emerald-50/80 text-emerald-700",
+    "border-yellow-200 bg-yellow-50/80 text-yellow-700",
+    "border-pink-200 bg-pink-50/80 text-pink-700",
+    "border-amber-200 bg-amber-50/80 text-amber-700",
+    "border-lime-200 bg-lime-50/80 text-lime-700",
+    "border-orange-200 bg-orange-50/80 text-orange-700",
+    "border-teal-200 bg-teal-50/80 text-teal-700",
+    "border-slate-200 bg-slate-50/80 text-slate-700",
+    "border-cyan-200 bg-cyan-50/80 text-cyan-700",
+    "border-rose-200 bg-rose-50/80 text-rose-700",
+  ];
+
+  const singerColorMap = useMemo(() => {
+    if (!venue) return new Map<string, string>();
+    const map = new Map<string, string>();
+    venue.bookings.forEach((booking, index) => {
+      if (!map.has(booking.singer)) {
+        map.set(booking.singer, colorClasses[index % colorClasses.length]);
+      }
+    });
+    return map;
+  }, [venue]);
+
+  const getSingerClass = (singer?: string) => {
+    if (!singer) return "border-slate-200 bg-slate-50 text-slate-700";
+    return singerColorMap.get(singer) ?? colorClasses[0];
   };
 
-  const handleConfirmBooking = () => {
-    setIsModalOpen(false);
-    setSelectedSlotIds([]);
+  const handlePurchase = () => {
+    if (!venue) return;
+    const trimmedName = singerName.trim();
+    if (!trimmedName) {
+      setErrorMessage("請輸入表演者名稱。");
+      return;
+    }
+    if (songCount < 1 || songCount > remainingSongs) {
+      setErrorMessage("購買數量超出可預約名額。");
+      return;
+    }
+    const nextVenues = venues.map((item) => {
+      if (item.id !== venue.id) return item;
+      return {
+        ...item,
+        bookings: [
+          ...item.bookings,
+          { id: `bk-${Date.now()}`, singer: trimmedName, songs: songCount },
+        ],
+      };
+    });
+    updateVenues(nextVenues);
+    setSingerName("");
+    setSongCount(1);
+    setErrorMessage("");
   };
 
   return (
@@ -50,10 +153,10 @@ export default function TimetablePage() {
           ←返回
         </Link>
         <h1 className="mt-4 text-3xl font-semibold text-slate-900 md:text-4xl">
-          15 分鐘一段的演唱時間表
+          預約演唱
         </h1>
         <p className="mt-2 text-sm text-slate-600">
-          選擇空檔時段後完成付款，即可確認表演位置。
+          選擇購買歌曲數量，即可確認表演位置。
         </p>
       </header>
 
@@ -67,26 +170,56 @@ export default function TimetablePage() {
               <h2 className="mt-2 text-xl font-semibold text-slate-900">
                 {venue ? venue.name : "找不到場次"}
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                {venue
-                  ? `${venue.region} · ${formatZhDate(venue.date)} · ${formatTimeRange(
-                      venue.timeRange
-                    )}`
-                  : ""}
-              </p>
+              {venue ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                    {venue.region}
+                  </span>
+                  <span className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-sm font-semibold text-indigo-700">
+                    {formatZhDate(venue.date)}
+                  </span>
+                  <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700">
+                    {formatTimeRange(venue.timeRange)}
+                  </span>
+                </div>
+              ) : null}
             </div>
             <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              已選 <span className="font-semibold">{selectedSlots.length}</span> 段
+              已售 <span className="font-semibold">{bookedSongs}</span> / {totalSongs} 首
             </div>
           </div>
 
           <div className="mt-6">
-            {venue ? (
-              <TimeSlotList
-                slots={venue.slots}
-                selectedSlotIds={selectedSlotIds}
-                onToggle={handleToggleSlot}
-              />
+            {!isReady ? (
+              <p className="text-sm text-slate-500">載入中...</p>
+            ) : venue ? (
+              <div className="grid gap-3">
+                {timetable.map((slot, index) => (
+                  <div
+                    key={`${slot.time}-${index}`}
+                    className={cn(
+                      "flex items-center justify-between rounded-xl border px-4 py-3 text-sm",
+                      slot.booked
+                        ? getSingerClass(slot.singer)
+                        : "border-dashed border-slate-200 bg-white text-slate-400"
+                    )}
+                  >
+                    <span className="font-medium text-slate-800">{slot.time}</span>
+                    {slot.booked ? (
+                      <span className="flex items-center gap-2">
+                        <span className="font-semibold text-slate-900">
+                          {slot.singer}
+                        </span>
+                        <span className="text-xs text-slate-600">
+                          歌曲{slot.songNumber}
+                        </span>
+                      </span>
+                    ) : (
+                      <span>可預約</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             ) : (
               <p className="text-sm text-slate-500">請返回首頁重新選擇場次。</p>
             )}
@@ -99,38 +232,84 @@ export default function TimetablePage() {
               Booking Summary
             </p>
             <p className="mt-2 text-lg font-semibold text-slate-900">
-              HK$ {totalAmount}
+              HK$ {songCount * unitPrice}
             </p>
             <p className="text-xs text-slate-500">每首 HK$ {unitPrice}</p>
+            <p className="mt-2 text-xs text-slate-500">
+              共 <span className="font-semibold text-slate-700">{totalSingers}</span> 位歌手參加
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              尚餘 <span className="font-semibold text-slate-700">{remainingSongs}</span> 首
+            </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            disabled={selectedSlots.length === 0}
-            className={cn(
-              "rounded-2xl px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition",
-              selectedSlots.length === 0
-                ? "cursor-not-allowed bg-slate-300"
-                : "bg-indigo-600 hover:bg-indigo-500"
-            )}
-          >
-            付款預約
-          </button>
+          <div className="rounded-3xl border border-white/80 bg-white/85 p-6 shadow-[0_28px_70px_-45px_rgba(15,23,42,0.4)]">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+              購買歌曲數量
+            </p>
+            <div className="mt-4 grid gap-3">
+              <input
+                value={singerName}
+                onChange={(event) => setSingerName(event.target.value)}
+                placeholder="表演者名稱"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm outline-none focus:border-indigo-300"
+              />
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
+                <span>購買數量</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSongCount((prev) => Math.max(1, prev - 1))}
+                    disabled={songCount <= 1}
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-full border text-sm font-semibold",
+                      songCount <= 1
+                        ? "cursor-not-allowed border-slate-200 text-slate-300"
+                        : "border-slate-300 text-slate-600 hover:border-indigo-300 hover:text-indigo-600"
+                    )}
+                  >
+                    -
+                  </button>
+                  <span className="min-w-[2rem] text-center text-sm font-semibold text-slate-900">
+                    {songCount}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSongCount((prev) => Math.min(remainingSongs || 1, prev + 1))
+                    }
+                    disabled={remainingSongs === 0 || songCount >= remainingSongs}
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-full border text-sm font-semibold",
+                      remainingSongs === 0 || songCount >= remainingSongs
+                        ? "cursor-not-allowed border-slate-200 text-slate-300"
+                        : "border-slate-300 text-slate-600 hover:border-indigo-300 hover:text-indigo-600"
+                    )}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              {errorMessage && (
+                <p className="text-xs text-rose-500">{errorMessage}</p>
+              )}
+              <button
+                type="button"
+                onClick={handlePurchase}
+                disabled={!venue || remainingSongs === 0}
+                className={cn(
+                  "rounded-2xl px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition",
+                  !venue || remainingSongs === 0
+                    ? "cursor-not-allowed bg-slate-300"
+                    : "bg-indigo-600 hover:bg-indigo-500"
+                )}
+              >
+                付款預約
+              </button>
+            </div>
+          </div>
         </aside>
       </main>
-
-      <BookingModal
-        open={isModalOpen}
-        slots={selectedSlots.map((slot) => ({
-          time: slot.time,
-          label: `${venue?.name ?? ""} · ${venue?.date ?? ""}`,
-        }))}
-        totalAmount={totalAmount}
-        onClose={() => setIsModalOpen(false)}
-        onConfirm={handleConfirmBooking}
-        currencyLabel="HK$"
-      />
     </div>
   );
 }
