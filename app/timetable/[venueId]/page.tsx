@@ -6,15 +6,17 @@ import { useMemo, useState } from "react";
 import BookingModal from "@/components/BookingModal";
 import TimeSlotList from "@/components/TimeSlotList";
 import { cn } from "@/lib/utils";
-import { pricePerSlot, venues } from "@/lib/venues";
+import { useVenueStore } from "@/lib/useVenueStore";
 
 export default function TimetablePage() {
   const params = useParams();
   const venueId = typeof params.venueId === "string" ? params.venueId : "";
 
+  const { venues } = useVenueStore();
+
   const venue = useMemo(
     () => venues.find((item) => item.id === venueId),
-    [venueId]
+    [venueId, venues]
   );
 
   const [selectedSlotIds, setSelectedSlotIds] = useState<string[]>([]);
@@ -24,7 +26,8 @@ export default function TimetablePage() {
     ? venue.slots.filter((slot) => selectedSlotIds.includes(slot.id))
     : [];
 
-  const totalAmount = selectedSlots.length * pricePerSlot;
+  const unitPrice = venue?.pricePerSong ?? 150;
+  const totalAmount = selectedSlots.length * unitPrice;
 
   const handleToggleSlot = (slot: { id: string }) => {
     setSelectedSlotIds((prev) =>
@@ -44,10 +47,10 @@ export default function TimetablePage() {
           href="/"
           className="text-xs font-semibold uppercase tracking-[0.3em] text-indigo-500"
         >
-          返回場次列表
+          ←返回
         </Link>
         <h1 className="mt-4 text-3xl font-semibold text-slate-900 md:text-4xl">
-          4 分鐘一段的演唱時間表
+          15 分鐘一段的演唱時間表
         </h1>
         <p className="mt-2 text-sm text-slate-600">
           選擇空檔時段後完成付款，即可確認表演位置。
@@ -94,7 +97,7 @@ export default function TimetablePage() {
             <p className="mt-2 text-lg font-semibold text-slate-900">
               HK$ {totalAmount}
             </p>
-            <p className="text-xs text-slate-500">每段 HK$ {pricePerSlot}</p>
+            <p className="text-xs text-slate-500">每首 HK$ {unitPrice}</p>
           </div>
 
           <button
